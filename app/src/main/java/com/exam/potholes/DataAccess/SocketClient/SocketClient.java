@@ -1,10 +1,12 @@
 package com.exam.potholes.DataAccess.SocketClient;
 
+import android.content.Context;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.exam.potholes.DataAccess.Repository.LoginRepository;
 import com.exam.potholes.Model.Pothole;
 import com.exam.potholes.R;
 
@@ -72,8 +74,8 @@ public class SocketClient {
     }
 
 
-    public LiveData<List<Pothole>> getFilter(String radius) {
-        String msg = "getAllPotholes",result;
+    public LiveData<List<Pothole>> getFilter(Context context, String radius, Double latitude, Double longitude) {
+        String msg = "getNearPotholes",result;
         List<Pothole> resultList = new ArrayList<>();
         try{
             Socket socket = this.openSocketConnection();
@@ -81,6 +83,11 @@ public class SocketClient {
                     new BufferedReader(
                             new InputStreamReader(socket.getInputStream()));
             socket.getOutputStream().write(msg.getBytes());
+            Thread.sleep(2000);
+
+            String request = this.formatRequest(LoginRepository.getInstance().getSavedNickname(context),
+                                                String.valueOf(latitude),String.valueOf(longitude),radius);
+            socket.getOutputStream().write(request.getBytes());
             Thread.sleep(2000);
 
             while(reader.ready()) {
@@ -98,49 +105,11 @@ public class SocketClient {
 
         return potholesList;
     }
+
+
+    private String formatRequest(String... args){
+        return String.join(";",args);
+    }
+
+
 }
-
-/*
-
-public static void main(String[] args) {
-
-        String msg = "insertPotholes",result = "1";
-        ArrayList<Pot> pots = new ArrayList<>();
-
-        try{
-            Socket socket = new Socket("127.0.0.1",8585);
-
-            socket.setSoTimeout(6000);
-            BufferedReader reader =
-                    new BufferedReader(
-                            new InputStreamReader(socket.getInputStream()));
-
-            socket.getOutputStream().write(msg.getBytes());
-
-            Thread.sleep(2000);
-            socket.getOutputStream().write("Marcello;sds;dfdf;dfdf".getBytes());
-
-            System.out.println("Attendo lettura");
-
-            while(reader.ready()) {
-                result = reader.readLine();
-                System.out.println(result);
-                //String[] tokens = result.split(";");
-                //pots.add(new Pot(tokens[0],tokens[1],tokens[2],tokens[3]));
-            }
-
-            socket.close();
-
-
-            for (Pot pot : pots) {
-                System.out.println(pot.toString());
-            }
-
-
-            }catch (Exception e){
-                e.printStackTrace();
-                }
-
-                }
-                }
-*/

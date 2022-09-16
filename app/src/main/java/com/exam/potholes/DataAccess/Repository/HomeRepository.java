@@ -29,7 +29,7 @@ public class HomeRepository {
        return this.socketClient.getAll();
     }
 
-    public LiveData<List<Pothole>> getFilterPotholes(Context context, String radius) {
-        return this.socketClient.getFilter(radius);
+    public LiveData<List<Pothole>> getFilterPotholes(Context context, String radius, Double latitude,Double longitude) {
+        return this.socketClient.getFilter(context,radius,latitude,longitude);
     }
 }

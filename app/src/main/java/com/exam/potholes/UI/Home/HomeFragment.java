@@ -5,6 +5,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -15,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,7 +40,7 @@ public class HomeFragment extends Fragment {
     private RecyclerView potholesList;
     private PotholesAdapter potholesAdapter;
     private FusedLocationProviderClient fusedLocationClient;
-    private Double currentLat,currentLon;
+    private Double currentLat = null,currentLon = null;
 
 
     public static HomeFragment newInstance() {
@@ -91,12 +93,9 @@ public class HomeFragment extends Fragment {
             });
         }else{
             if (validateFilterInput()){
-                mViewModel.getFilterPotholes(getContext(),binding.radiusInput.getText().toString()).observe(getViewLifecycleOwner(), new Observer<List<Pothole>>() {
-                    @Override
-                    public void onChanged(List<Pothole> potholes) {
-                        potholesAdapter.setPotholes(potholes);
-                    }
-                });
+                while (currentLon == null && currentLat == null)
+                    this.setCurrentPositionForFilter();
+                mViewModel.getFilterPotholes(getContext(),binding.radiusInput.getText().toString(),currentLat,currentLon);
             }
         }
 
@@ -114,7 +113,12 @@ public class HomeFragment extends Fragment {
 
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
+            new AlertDialog.Builder(getContext())
+                    .setTitle("Permessi mancanti")
+                    .setMessage("Per utilizzare l'app è necessario abilitare i permessi per la localizzazione.\nPer fare in modo che l'app funzioni anche in background, seleziona \"Consenti sempre\"")
+                    .setPositiveButton("Concedi", (dialogInterface, i) -> requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, 101))
+                    .setNegativeButton("Annulla", (dialogInterface, i) -> getActivity().finish())
+                    .show();
         }
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
@@ -128,6 +132,15 @@ public class HomeFragment extends Fragment {
                         }
                     }
                 });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 101) {
+            Log.i("Permessi concessi", "Permessi concessi: procedo a localizzare l'utente");
+            setCurrentPositionForFilter();
+        }
     }
 
 }

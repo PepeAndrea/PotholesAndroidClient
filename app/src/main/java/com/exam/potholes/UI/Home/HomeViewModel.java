@@ -23,7 +23,7 @@ public class HomeViewModel extends ViewModel {
        return this.homeRepository.getPotholes(context);
     }
 
-    public LiveData<List<Pothole>> getFilterPotholes(Context context, String radius) {
-        return this.homeRepository.getFilterPotholes(context,radius);
+    public LiveData<List<Pothole>> getFilterPotholes(Context context, String radius, Double latitude,Double longitude) {
+        return this.homeRepository.getFilterPotholes(context,radius,latitude,longitude);
     }
 }
