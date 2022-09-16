@@ -3,6 +3,7 @@ package com.exam.potholes;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.os.StrictMode;
 
 import com.exam.potholes.DataAccess.Repository.LoginRepository;
 import com.exam.potholes.UI.Home.HomeFragment;
@@ -15,6 +16,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
         getSupportActionBar().hide();
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
         if (savedInstanceState == null) {
             if(!LoginRepository.getInstance().isNicknameSaved(this)){
                 getSupportFragmentManager().beginTransaction()
