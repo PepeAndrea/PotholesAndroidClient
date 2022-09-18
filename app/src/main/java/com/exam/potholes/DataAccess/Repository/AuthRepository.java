@@ -3,18 +3,18 @@ package com.exam.potholes.DataAccess.Repository;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-public class LoginRepository {
-    private static LoginRepository loginRepository;
+public class AuthRepository {
+    private static AuthRepository authRepository;
 
 
-    public LoginRepository() {
+    public AuthRepository() {
     }
 
-    public static LoginRepository getInstance(){
-        if(loginRepository == null){
-            loginRepository = new LoginRepository();
+    public static AuthRepository getInstance(){
+        if(authRepository == null){
+            authRepository = new AuthRepository();
         }
-        return loginRepository;
+        return authRepository;
     }
 
     public void saveNickname(Context context,String nickname){

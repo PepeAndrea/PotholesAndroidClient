@@ -5,7 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.StrictMode;
 
-import com.exam.potholes.DataAccess.Repository.LoginRepository;
+import com.exam.potholes.DataAccess.Repository.AuthRepository;
 import com.exam.potholes.UI.Home.HomeFragment;
 import com.exam.potholes.UI.Login.LoginFragment;
 
@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.setThreadPolicy(policy);
 
         if (savedInstanceState == null) {
-            if(!LoginRepository.getInstance().isNicknameSaved(this)){
+            if(!AuthRepository.getInstance().isNicknameSaved(this)){
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.container, LoginFragment.newInstance())
                         .commitNow();

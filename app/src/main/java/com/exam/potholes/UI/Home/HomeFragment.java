@@ -21,8 +21,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.exam.potholes.DataAccess.Repository.LoginRepository;
-import com.exam.potholes.MainActivity;
 import com.exam.potholes.Model.Pothole;
 import com.exam.potholes.R;
 import com.exam.potholes.UI.Adapter.PotholesAdapter;
@@ -63,8 +61,19 @@ public class HomeFragment extends Fragment {
         this.ObserveChange();
 
         binding.radiusFilterButton.setOnClickListener(view -> this.radiusFilterButtonClick(view));
+        binding.startStopRecording.setOnClickListener(view -> this.startStopSession(view));
 
         return root;
+
+    }
+
+    private void startStopSession(View view) {
+
+        if (this.mViewModel.isServiceRunning(getContext())){
+            this.mViewModel.stopPotholesFinder(getContext());
+        }else{
+            this.mViewModel.startPotholesFinder(getContext());
+        }
 
     }
 
@@ -100,6 +109,7 @@ public class HomeFragment extends Fragment {
         }
 
     }
+
     private boolean validateFilterInput() {
         boolean validated = true;
         if(!binding.radiusInput.getText().toString().matches("^[0-9]*$")){
@@ -133,6 +143,8 @@ public class HomeFragment extends Fragment {
                     }
                 });
     }
+
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {

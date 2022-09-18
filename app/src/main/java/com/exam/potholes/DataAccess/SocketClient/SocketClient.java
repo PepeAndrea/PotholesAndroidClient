@@ -6,9 +6,8 @@ import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.exam.potholes.DataAccess.Repository.LoginRepository;
+import com.exam.potholes.DataAccess.Repository.AuthRepository;
 import com.exam.potholes.Model.Pothole;
-import com.exam.potholes.R;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,6 +23,8 @@ public class SocketClient {
 
     private static SocketClient socketClient;
     private MutableLiveData<List<Pothole>> potholesList = new MutableLiveData<>();
+    private MutableLiveData<Float> threshold = new MutableLiveData<>(-1f);
+
 
     public static SocketClient getInstance(){
         if(socketClient == null){
@@ -73,7 +74,6 @@ public class SocketClient {
         return potholesList;
     }
 
-
     public LiveData<List<Pothole>> getFilter(Context context, String radius, Double latitude, Double longitude) {
         String msg = "getNearPotholes",result;
         List<Pothole> resultList = new ArrayList<>();
@@ -85,7 +85,7 @@ public class SocketClient {
             socket.getOutputStream().write(msg.getBytes());
             Thread.sleep(2000);
 
-            String request = this.formatRequest(LoginRepository.getInstance().getSavedNickname(context),
+            String request = this.formatRequest(AuthRepository.getInstance().getSavedNickname(context),
                                                 String.valueOf(latitude),String.valueOf(longitude),radius);
             socket.getOutputStream().write(request.getBytes());
             Thread.sleep(2000);
@@ -106,6 +106,29 @@ public class SocketClient {
         return potholesList;
     }
 
+    public LiveData<Float> getThreshold(Context context){
+        String msg = "getThreshold";
+        try{
+            Socket socket = this.openSocketConnection();
+            BufferedReader reader =
+                    new BufferedReader(
+                            new InputStreamReader(socket.getInputStream()));
+            socket.getOutputStream().write(msg.getBytes());
+            Thread.sleep(2000);
+
+            if(reader.ready()) {
+                threshold.setValue(Float.valueOf(reader.readLine()));
+            }
+
+            socket.close();
+
+        }catch (Exception e){
+            Log.e("Errore comunicazione con il socket","Impossibile dialogare con il socket");
+            e.printStackTrace();
+        }
+
+        return threshold;
+    }
 
     private String formatRequest(String... args){
         return String.join(";",args);

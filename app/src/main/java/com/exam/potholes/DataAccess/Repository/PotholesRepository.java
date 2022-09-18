@@ -9,20 +9,20 @@ import com.exam.potholes.Model.Pothole;
 
 import java.util.List;
 
-public class HomeRepository {
-    private static HomeRepository homeRepository;
+public class PotholesRepository {
+    private static PotholesRepository potholesRepository;
     private SocketClient socketClient;
 
 
-    public HomeRepository() {
+    public PotholesRepository() {
         this.socketClient = SocketClient.getInstance();
     }
 
-    public static HomeRepository getInstance(){
-        if(homeRepository == null){
-            homeRepository = new HomeRepository();
+    public static PotholesRepository getInstance(){
+        if(potholesRepository == null){
+            potholesRepository = new PotholesRepository();
         }
-        return homeRepository;
+        return potholesRepository;
     }
 
     public LiveData<List<Pothole>> getPotholes(Context context) {
