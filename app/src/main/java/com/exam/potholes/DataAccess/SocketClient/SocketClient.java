@@ -1,13 +1,19 @@
 package com.exam.potholes.DataAccess.SocketClient;
 
+import android.Manifest;
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.exam.potholes.DataAccess.Repository.AuthRepository;
 import com.exam.potholes.Model.Pothole;
+import com.exam.potholes.R;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -23,7 +29,7 @@ public class SocketClient {
 
     private static SocketClient socketClient;
     private MutableLiveData<List<Pothole>> potholesList = new MutableLiveData<>();
-    private MutableLiveData<Float> threshold = new MutableLiveData<>(-1f);
+    private MutableLiveData<Double> threshold = new MutableLiveData<>(-1d);
 
 
     public static SocketClient getInstance(){
@@ -65,7 +71,7 @@ public class SocketClient {
             }
 
             socket.close();
-            potholesList.setValue(resultList);
+            potholesList.postValue(resultList);
         }catch (Exception e){
             Log.e("Errore comunicazione con il socket","Impossibile dialogare con il socket");
             e.printStackTrace();
@@ -97,7 +103,7 @@ public class SocketClient {
             }
 
             socket.close();
-            potholesList.setValue(resultList);
+            potholesList.postValue(resultList);
         }catch (Exception e){
             Log.e("Errore comunicazione con il socket","Impossibile dialogare con il socket");
             e.printStackTrace();
@@ -106,7 +112,7 @@ public class SocketClient {
         return potholesList;
     }
 
-    public LiveData<Float> getThreshold(Context context){
+    public LiveData<Double> getThreshold(Context context){
         String msg = "getThreshold";
         try{
             Socket socket = this.openSocketConnection();
@@ -117,7 +123,7 @@ public class SocketClient {
             Thread.sleep(2000);
 
             if(reader.ready()) {
-                threshold.setValue(Float.valueOf(reader.readLine()));
+                threshold.postValue(Double.valueOf(reader.readLine()));
             }
 
             socket.close();
@@ -125,9 +131,38 @@ public class SocketClient {
         }catch (Exception e){
             Log.e("Errore comunicazione con il socket","Impossibile dialogare con il socket");
             e.printStackTrace();
+            threshold.postValue(-2d);
         }
 
         return threshold;
+    }
+
+    public void insertPothole(Pothole pothole){
+        String msg = "insertPotholes",result;
+        List<Pothole> resultList = new ArrayList<>();
+        try{
+            Socket socket = this.openSocketConnection();
+            BufferedReader reader =
+                    new BufferedReader(
+                            new InputStreamReader(socket.getInputStream()));
+            socket.getOutputStream().write(msg.getBytes());
+            Thread.sleep(2000);
+
+            String request = this.formatRequest(pothole.getUsername(),String.valueOf(pothole.getLatitude()),String.valueOf(pothole.getLongitude()),String.valueOf(pothole.getVariation()));
+            socket.getOutputStream().write(request.getBytes());
+            Thread.sleep(2000);
+
+            if(reader.ready()) {
+                String res = reader.readLine();
+                if(res == "ERROR\n")
+                    Log.e("Errore inserimento", "Non è stato possibile inserire il record nel database");
+            }
+
+            socket.close();
+        }catch (Exception e){
+            Log.e("Errore comunicazione con il socket","Impossibile dialogare con il socket");
+            e.printStackTrace();
+        }
     }
 
     private String formatRequest(String... args){
@@ -135,4 +170,11 @@ public class SocketClient {
     }
 
 
+    public LiveData<List<Pothole>> getObservablePotholes() {
+        return potholesList;
+    }
+
+    public LiveData<Double> getObservableThreshold() {
+        return this.threshold;
+    }
 }

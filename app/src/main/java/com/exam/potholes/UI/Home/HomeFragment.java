@@ -59,31 +59,48 @@ public class HomeFragment extends Fragment {
         this.potholesList = root.findViewById(R.id.potholesList);
         this.setupPathList();
         this.ObserveChange();
+        this.mViewModel.setupSessionRecording(getContext(),getViewLifecycleOwner());
 
         binding.radiusFilterButton.setOnClickListener(view -> this.radiusFilterButtonClick(view));
         binding.startStopRecording.setOnClickListener(view -> this.startStopSession(view));
+
+        this.setupActionButton();
 
         return root;
 
     }
 
-    private void startStopSession(View view) {
+    private void setupActionButton() {
+        if (this.mViewModel.isServiceRunning(getContext())){
+            binding.startStopRecording.setText("Ferma registrazione");
+        }else{
+            binding.startStopRecording.setText("Avvia registrazione");
+        }
+    }
 
+    private void startStopSession(View view) {
         if (this.mViewModel.isServiceRunning(getContext())){
             this.mViewModel.stopPotholesFinder(getContext());
         }else{
+            binding.startStopRecording.setEnabled(false);
             this.mViewModel.startPotholesFinder(getContext());
         }
-
     }
 
     private void ObserveChange() {
-        mViewModel.getPotholes(getContext()).observe(getViewLifecycleOwner(), new Observer<List<Pothole>>() {
+        mViewModel.getObservablePotholes(getContext()).observe(getViewLifecycleOwner(), new Observer<List<Pothole>>() {
             @Override
             public void onChanged(List<Pothole> potholes) {
                 potholesAdapter.setPotholes(potholes);
             }
         });
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                mViewModel.getPotholes(getContext());
+            }
+        }).start();
     }
 
     private void setupPathList() {
@@ -94,17 +111,22 @@ public class HomeFragment extends Fragment {
 
     private void radiusFilterButtonClick(View view) {
         if(binding.radiusInput.length() == 0){
-            mViewModel.getPotholes(getContext()).observe(getViewLifecycleOwner(), new Observer<List<Pothole>>() {
+            new Thread(new Runnable() {
                 @Override
-                public void onChanged(List<Pothole> potholes) {
-                    potholesAdapter.setPotholes(potholes);
+                public void run() {
+                    mViewModel.getPotholes(getContext());
                 }
-            });
+            }).start();
         }else{
             if (validateFilterInput()){
                 while (currentLon == null && currentLat == null)
                     this.setCurrentPositionForFilter();
-                mViewModel.getFilterPotholes(getContext(),binding.radiusInput.getText().toString(),currentLat,currentLon);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mViewModel.getFilterPotholes(getContext(),binding.radiusInput.getText().toString(),currentLat,currentLon);
+                    }
+                }).start();
             }
         }
 
@@ -143,8 +165,6 @@ public class HomeFragment extends Fragment {
                     }
                 });
     }
-
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {

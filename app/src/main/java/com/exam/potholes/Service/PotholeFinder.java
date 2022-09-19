@@ -1,41 +1,61 @@
 package com.exam.potholes.Service;
 
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Location;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
 import com.exam.potholes.BuildConfig;
+import com.exam.potholes.DataAccess.Repository.AuthRepository;
+import com.exam.potholes.DataAccess.Repository.PotholesRepository;
+import com.exam.potholes.Model.Pothole;
 import com.exam.potholes.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 
-public class PotholeFinder extends Service implements SensorEventListener{
+import java.util.Date;
+
+public class PotholeFinder extends Service implements SensorEventListener {
 
     private FusedLocationProviderClient fusedLocationClient;
     private SensorManager sensorManager;
-    private Sensor accellerometer;
+    private Sensor accelerometer;
+    private Context context;
+    private double threshold;
+    private String nickname;
+    private long lastEventTime = System.currentTimeMillis();
 
     public PotholeFinder() {
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i("PotholeFinder","Service partito");
+        Log.i("PotholeFinder", "Service partito");
         super.onStartCommand(intent, flags, startId);
+        this.context = this;
+        this.threshold = intent.getDoubleExtra("threshold",-1);
+        this.nickname = AuthRepository.getInstance().getSavedNickname(context);
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        accellerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        sensorManager.registerListener(this, accellerometer , SensorManager.SENSOR_DELAY_NORMAL);
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         this.showNotificationAndStartForegroundService();
         return START_STICKY;
@@ -44,8 +64,8 @@ public class PotholeFinder extends Service implements SensorEventListener{
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.i("PotholeFinder","Service interrotto");
-        sensorManager.unregisterListener(this,accellerometer);
+        Log.i("PotholeFinder", "Service interrotto");
+        sensorManager.unregisterListener(this, accelerometer);
     }
 
     private void showNotificationAndStartForegroundService() {
@@ -83,31 +103,67 @@ public class PotholeFinder extends Service implements SensorEventListener{
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
         stopForeground(true);
-        sensorManager.unregisterListener(this,accellerometer);
+        sensorManager.unregisterListener(this, accelerometer);
         stopSelf();
     }
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        Log.i("SENSOR1", String.valueOf(sensorEvent.values[0]));
-        Log.i("SENSOR2", String.valueOf(sensorEvent.values[1]));
-        Log.i("SENSOR3", String.valueOf(sensorEvent.values[2]));
-        Log.i("SENSOR", "\n\n\n");
 
         final float alpha = 0.8f;
 
-        //@AndroidDeveloper
         double[] gravity = new double[3];
         gravity[0] = alpha * gravity[0] + (1 - alpha) * sensorEvent.values[0];
         gravity[1] = alpha * gravity[1] + (1 - alpha) * sensorEvent.values[1];
         gravity[2] = alpha * gravity[2] + (1 - alpha) * sensorEvent.values[2];
-
+        /*
         double[] linear_acceleration = new double[3];
         linear_acceleration[0] = sensorEvent.values[0] - gravity[0];
         linear_acceleration[1] = sensorEvent.values[1] - gravity[1];
         linear_acceleration[2] = sensorEvent.values[2] - gravity[2];
+        */
+        double[] linear_acceleration = new double[3];
+        linear_acceleration[0] = sensorEvent.values[0];
+        linear_acceleration[1] = sensorEvent.values[1];
+        linear_acceleration[2] = sensorEvent.values[2];
 
-        Log.i("ACC", String.valueOf(Math.abs(linear_acceleration[1]))+"\n\n\n\n");
+        double verticalAcc = Math.sqrt(linear_acceleration[0] * linear_acceleration[0] + linear_acceleration[1] * linear_acceleration[1] + linear_acceleration[2] * linear_acceleration[2]);
+        //Log.e("VERTICAL", "onSensorChanged: "+verticalAcc);
+        if (verticalAcc > this.threshold) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+
+            long newEvent = System.currentTimeMillis();
+            long passedSecond = (newEvent - lastEventTime)/1000;
+            //Log.e("TEMPO",lastEventTime+"--"+newEvent+"--"+passedSecond);
+            if (passedSecond < 2){
+                return;
+            }
+
+            lastEventTime = newEvent;
+
+            fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY,null)
+                    .addOnSuccessListener(new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            Log.e("LOCATION", "LOCATION OTTENUTA");
+                            if (location != null) {
+                                Log.i("Accellerazione", String.valueOf(verticalAcc)+"\n\n\n\n");
+                                Log.i("Latitudine", String.valueOf(location.getLatitude())+"\n\n\n\n");
+                                Log.i("Longitudine", String.valueOf(location.getLongitude())+"\n\n\n\n");
+                                Log.i("RIGA SEPARAZIONE", "------------------");
+
+                                Pothole newPothole = new Pothole(nickname,location.getLatitude(),location.getLongitude(),verticalAcc);
+
+                                Thread newThread = new Thread(new InsertPotholesThread(newPothole));
+                                newThread.start();
+                            }
+                        }
+                    });
+
+        }
+
     }
 
     @Override
