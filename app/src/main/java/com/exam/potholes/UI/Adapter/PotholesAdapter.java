@@ -31,7 +31,7 @@ public class PotholesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         ((PotholeViewHolder) holder).username.setText(potholeList.get(position).getUsername());
         ((PotholeViewHolder) holder).latitude.setText("Lat: "+String.valueOf(potholeList.get(position).getLatitude()));
         ((PotholeViewHolder) holder).longitude.setText("Lon: "+String.valueOf(potholeList.get(position).getLongitude()));
-        ((PotholeViewHolder) holder).variation.setText("Variazione: "+String.valueOf(potholeList.get(position).getVariation()));
+        ((PotholeViewHolder) holder).variation.setText("Variazione: "+String.format("%.2f",potholeList.get(position).getVariation())+"m/s\u00b2");
     }
 
     @Override
