@@ -159,8 +159,8 @@ public class HomeFragment extends Fragment {
                         if (location != null) {
                             currentLat = location.getLatitude();
                             currentLon = location.getLongitude();
-                            binding.latValue.setText(String.valueOf(currentLat));
-                            binding.lonValue.setText(String.valueOf(currentLon));
+                            binding.latValue.setText("Lat: " + String.valueOf(currentLat));
+                            binding.lonValue.setText("Lon: " + String.valueOf(currentLon));
                         }
                     }
                 });
