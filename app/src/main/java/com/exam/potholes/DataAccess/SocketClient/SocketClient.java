@@ -24,7 +24,7 @@ import java.util.List;
 
 public class SocketClient {
 
-    private static String server_address = "192.168.1.127";
+    private static String server_address = "4.231.56.238";
     private static int server_port = 8585;
 
     private static SocketClient socketClient;
