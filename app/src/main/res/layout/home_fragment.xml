@@ -69,7 +69,7 @@
             android:layout_marginEnd="24dp"
             android:text="Le tue coordinate attuali:"
             android:textColor="#ffffff"
-            android:textSize="20sp"
+            android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/radiusInput" />
@@ -82,7 +82,7 @@
             android:layout_marginTop="16dp"
             android:text="Lat: errore"
             android:textColor="#ffffff"
-            android:textSize="18sp"
+            android:textSize="16sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/coordinateText" />
 
@@ -94,7 +94,7 @@
             android:layout_marginEnd="24dp"
             android:text="Lon: errore"
             android:textColor="#ffffff"
-            android:textSize="18sp"
+            android:textSize="16sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/coordinateText" />
 
