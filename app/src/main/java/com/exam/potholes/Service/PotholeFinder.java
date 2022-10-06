@@ -42,7 +42,6 @@ public class PotholeFinder extends Service implements SensorEventListener {
     private String nickname;
     private long lastEventTime = System.currentTimeMillis();
 
-    //Check
     double Yaccel = 0;
     double Xaccel = 0;
     double Zaccel = 0;
@@ -81,6 +80,7 @@ public class PotholeFinder extends Service implements SensorEventListener {
         super.onDestroy();
         Log.i("PotholeFinder", "Service interrotto");
         sensorManager.unregisterListener(this, accelerometer);
+        sensorManager.unregisterListener(this, gravity);
     }
 
     private void showNotificationAndStartForegroundService() {
@@ -119,22 +119,13 @@ public class PotholeFinder extends Service implements SensorEventListener {
         super.onTaskRemoved(rootIntent);
         stopForeground(true);
         sensorManager.unregisterListener(this, accelerometer);
+        sensorManager.unregisterListener(this, gravity);
         stopSelf();
     }
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
 
-        /*
-        double[] linear_acceleration = new double[3];
-        linear_acceleration[0] = sensorEvent.values[0];
-        linear_acceleration[1] = sensorEvent.values[1];
-        linear_acceleration[2] = sensorEvent.values[2];
-        */
-
-
-
-        //TODO PRIMA PROVA
         Sensor sensor = sensorEvent.sensor;
         double verticalAccel;
         if (sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
@@ -149,51 +140,16 @@ public class PotholeFinder extends Service implements SensorEventListener {
             gravityZ = (double) sensorEvent.values[2];
         }
 
+        /*
         double scalarProduct = gravityX * Xaccel + gravityY * Yaccel + gravityZ * Zaccel;
         Double gravityVectorLength = Math.sqrt(gravityX * gravityX + gravityY * gravityY + gravityZ * gravityZ);
         Double linearAccVectorLength = Math.sqrt(Xaccel * Xaccel + Yaccel * Yaccel + Zaccel * Zaccel);
+        double cosVectorAngle = scalarProduct / (gravityVectorLength * linearAccVectorLength);
+        */
+
         verticalAccel = (Xaccel * gravityX / 9.8) + (Yaccel * gravityY / 9.8) +  (Zaccel *gravityZ /9.8);
 
-
-        double cosVectorAngle = scalarProduct / (gravityVectorLength * linearAccVectorLength);
-
-        long newEvent = System.currentTimeMillis();
-        long passedSecond = (newEvent - lastEventTime)/1000;
-        Log.e("TEMPO",lastEventTime+"--"+newEvent+"--"+passedSecond);
-        if (passedSecond > 2){
-            if (linearAccVectorLength > 5) { //increase to detect only bigger accelerations, decrease to make detection more sensitive but noisy
-                if (cosVectorAngle < -0.5) {
-                    lastEventTime = newEvent;
-                    Log.e("DIRE","DOWN");
-                    Log.e("DIRE:Scal_prod",String.valueOf(scalarProduct));
-                    Log.e("DIRE:Grav_vec",String.valueOf(gravityVectorLength));
-                    Log.e("DIRE:Lin_Acc_vec",String.valueOf(linearAccVectorLength));
-                    Log.e("DIRE:V-ACC",String.valueOf(verticalAccel));
-
-                } else if (cosVectorAngle > 0.5) {
-                    //Log.e("DIRE","UP");
-                    //Log.e("DIRE:Scal_prod",String.valueOf(scalarProduct));
-                    //Log.e("DIRE:Grav_vec",String.valueOf(gravityVectorLength));
-                    //Log.e("DIRE:Lin_Acc_vec",String.valueOf(linearAccVectorLength));
-                    //Log.e("DIRE:V-ACC",String.valueOf(verticalAccel));
-                }
-            }
-        }
-
-
-
-
-        //Log.e("V-ACC",String.valueOf(verticalAccel));
-        //Log.e("D-ACC",String.valueOf(Xaccel+" "+gravityX+" - "+Yaccel+" "+gravityY+" - "+Zaccel+" "+gravityZ));
-
-
-
-        //double verticalAcc = Math.sqrt(linear_acceleration[0] * linear_acceleration[0] + linear_acceleration[1] * linear_acceleration[1] + linear_acceleration[2] * linear_acceleration[2]);
-
-
-        //Log.e("VERTICAL", "onSensorChanged: "+verticalAcc);
-        /*
-        if (verticalAcc > this.threshold) {
+        if (Math.abs(verticalAccel) > this.threshold) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
@@ -213,12 +169,12 @@ public class PotholeFinder extends Service implements SensorEventListener {
                         public void onSuccess(Location location) {
                             Log.e("LOCATION", "LOCATION OTTENUTA");
                             if (location != null) {
-                                Log.i("Accellerazione", String.valueOf(verticalAcc)+"\n\n\n\n");
+                                Log.i("Accellerazione", String.valueOf(Math.abs(verticalAccel))+"\n\n\n\n");
                                 Log.i("Latitudine", String.valueOf(location.getLatitude())+"\n\n\n\n");
                                 Log.i("Longitudine", String.valueOf(location.getLongitude())+"\n\n\n\n");
                                 Log.i("RIGA SEPARAZIONE", "------------------");
 
-                                Pothole newPothole = new Pothole(nickname,location.getLatitude(),location.getLongitude(),verticalAcc);
+                                Pothole newPothole = new Pothole(nickname,location.getLatitude(),location.getLongitude(),Math.abs(verticalAccel));
 
                                 Thread newThread = new Thread(new InsertPotholesThread(newPothole));
                                 newThread.start();
@@ -227,7 +183,7 @@ public class PotholeFinder extends Service implements SensorEventListener {
                     });
 
         }
-        */
+
     }
 
     @Override
