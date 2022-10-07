@@ -1,6 +1,7 @@
 package com.exam.potholes.UI.Home;
 
 import androidx.core.app.ActivityCompat;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -16,6 +17,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,8 +28,11 @@ import com.exam.potholes.R;
 import com.exam.potholes.UI.Adapter.PotholesAdapter;
 import com.exam.potholes.databinding.HomeFragmentBinding;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.location.LocationRequest;
 
 import java.util.List;
 
@@ -39,6 +44,23 @@ public class HomeFragment extends Fragment {
     private PotholesAdapter potholesAdapter;
     private FusedLocationProviderClient fusedLocationClient;
     private Double currentLat = null,currentLon = null;
+    private LocationRequest locationRequest;
+
+    private LocationCallback locationCallback = new LocationCallback() {
+
+        @Override
+        public void onLocationResult(@NonNull LocationResult locationResult) {
+            super.onLocationResult(locationResult);
+            Log.i("LOCATION", "onLocationResult: "+locationResult.toString());
+            if (locationResult.getLastLocation() != null) {
+                currentLat = locationResult.getLastLocation().getLatitude();
+                currentLon = locationResult.getLastLocation().getLongitude();
+                binding.latValue.setText("Lat: " + String.valueOf(currentLat));
+                binding.lonValue.setText("Lon: " + String.valueOf(currentLon));
+            }
+
+        }
+    };
 
 
     public static HomeFragment newInstance() {
@@ -54,6 +76,7 @@ public class HomeFragment extends Fragment {
         View root = binding.getRoot();
 
         this.fusedLocationClient = LocationServices.getFusedLocationProviderClient(getContext());
+        locationRequest = LocationRequest.create().setInterval(1000*60*5).setPriority(LocationRequest.PRIORITY_LOW_POWER);
         this.setCurrentPositionForFilter();
 
         this.potholesList = root.findViewById(R.id.potholesList);
@@ -158,18 +181,10 @@ public class HomeFragment extends Fragment {
                     .setNegativeButton("Annulla", (dialogInterface, i) -> getActivity().finish())
                     .show();
         }
-        fusedLocationClient.getLastLocation()
-                .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        if (location != null) {
-                            currentLat = location.getLatitude();
-                            currentLon = location.getLongitude();
-                            binding.latValue.setText("Lat: " + String.valueOf(currentLat));
-                            binding.lonValue.setText("Lon: " + String.valueOf(currentLon));
-                        }
-                    }
-                });
+
+        fusedLocationClient.requestLocationUpdates(locationRequest,
+                locationCallback,
+                Looper.getMainLooper());
     }
 
     @Override
