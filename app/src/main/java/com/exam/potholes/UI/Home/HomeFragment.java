@@ -81,6 +81,12 @@ public class HomeFragment extends Fragment {
     private void startStopSession(View view) {
         if (this.mViewModel.isServiceRunning(getContext())){
             this.mViewModel.stopPotholesFinder(getContext());
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    mViewModel.getPotholes(getContext());
+                }
+            }).start();
         }else{
             binding.startStopRecording.setEnabled(false);
             this.mViewModel.startPotholesFinder(getContext());

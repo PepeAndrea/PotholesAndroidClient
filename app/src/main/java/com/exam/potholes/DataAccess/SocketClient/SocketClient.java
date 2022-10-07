@@ -67,7 +67,7 @@ public class SocketClient {
             while(reader.ready()) {
                 result = reader.readLine();
                 String[] tokens = result.split(";");
-                resultList.add(new Pothole(tokens[0],Double.valueOf(tokens[1]),Double.valueOf(tokens[2]),Double.valueOf(tokens[3])));
+                resultList.add(0,new Pothole(tokens[0],Double.valueOf(tokens[1]),Double.valueOf(tokens[2]),Double.valueOf(tokens[3])));
             }
 
             socket.close();
@@ -99,7 +99,7 @@ public class SocketClient {
             while(reader.ready()) {
                 result = reader.readLine();
                 String[] tokens = result.split(";");
-                resultList.add(new Pothole(tokens[0],Double.valueOf(tokens[1]),Double.valueOf(tokens[2]),Double.valueOf(tokens[3])));
+                resultList.add(0,new Pothole(tokens[0],Double.valueOf(tokens[1]),Double.valueOf(tokens[2]),Double.valueOf(tokens[3])));
             }
 
             socket.close();
