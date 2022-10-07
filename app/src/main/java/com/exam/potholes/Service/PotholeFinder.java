@@ -127,7 +127,7 @@ public class PotholeFinder extends Service implements SensorEventListener {
     public void onSensorChanged(SensorEvent sensorEvent) {
 
         Sensor sensor = sensorEvent.sensor;
-        double verticalAccel;
+        double verticalAccel, g = 9.80665;
         if (sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
             Xaccel = (double) sensorEvent.values[0];
             Yaccel = (double) sensorEvent.values[1];
@@ -147,7 +147,7 @@ public class PotholeFinder extends Service implements SensorEventListener {
         double cosVectorAngle = scalarProduct / (gravityVectorLength * linearAccVectorLength);
         */
 
-        verticalAccel = (Xaccel * gravityX / 9.8) + (Yaccel * gravityY / 9.8) +  (Zaccel *gravityZ /9.8);
+        verticalAccel = (Xaccel * gravityX / g) + (Yaccel * gravityY / g) +  (Zaccel *gravityZ / g);
 
         if (Math.abs(verticalAccel) > this.threshold) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
